@@ -1,8 +1,8 @@
-setwd("/")
+#setwd("/Users/zeidh/Desktop/BreakpointerGithub/")
 args = commandArgs(trailingOnly=TRUE)
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(miceadds)))
-#args= c("/Users/zeidh/Desktop/BreakpointerGithub/Input/Metrics/Aug28.txt",  "/Users/zeidh/Desktop/BreakpointerGithub/Input/RData_unfiltered/","/Users/zeidh/Desktop/BreakpointerGithub/Input/RData_good/")
+#args= c("Input/metrics/Aug28.txt","Input/RData_unfiltered/","Input/RData_good/")
 cat("\n")
 cat("Filtering out poor quality libraries ....")
 

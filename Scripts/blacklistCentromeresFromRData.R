@@ -2,11 +2,13 @@ suppressWarnings(suppressMessages(library(miceadds)))
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(breakpointR)))
 suppressWarnings(suppressMessages(library(GenomicRanges)))
-setwd("/")
+#setwd("/")
+#setwd("/Users/zeidh/Desktop/BreakpointerGithub/")
 args = commandArgs(trailingOnly=TRUE)
 n=0
 #wrapper function for filtering and plotting functions
 master <- function(inputDirectory, outputDirectory,plottingDirectory){
+	#file=list.files(inputDirectory,full.names = T)[1]
 	for (file in list.files(inputDirectory,full.names = T)){
 		n=n+1
 		perc = round((n/length(list.files(inputDirectory,full.names = T)))*100,2)
@@ -36,7 +38,7 @@ removeCentromereSCEs <- function(data,bedfile){
 }
 
 blacklistBreakpoint <- function(file,outputDirectory){
-	setwd("/")
+	#setwd("/")
 	data <- load.Rdata2(file)
 	
 	breakpoints <- data$breaks
@@ -60,8 +62,9 @@ plotBreakpoints <- function(fileDir,plotDir){
 
 master(args[1],args[2],args[3])
 
-#args=c("/Users/zeidh/Desktop/Data/RDATA/ALL","/Users/zeidh/Desktop/Data/RDATA/ALL_BL/","/Users/zeidh/Desktop/Data/PLOTS/")
+#args=c("Input/RData_good/","Input/RData_blacklisted/","Output/BPR_breaksPlots/")
 #inputDirectory =  args[1]
+#list.files(inputDirectory)
 #bedfile="/Users/zeidh/Desktop/Coding/for_ERIBA/blacklist/centromeres2.txt"
 #outputDirectory = args[2]
 #outputDir=outputDirectory 

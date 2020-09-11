@@ -1,6 +1,6 @@
 #This script is for collecting Breakpoints from multiple libraries
 #Also for creating seperate files for different cell lines (ie. blm, recq5 ..)
-setwd("/")
+#setwd("/")
 args = commandArgs(trailingOnly=TRUE)
 
 suppressWarnings(suppressMessages(library(tidyverse)))
