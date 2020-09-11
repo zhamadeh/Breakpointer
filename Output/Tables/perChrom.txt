@@ -1,3 +1,4 @@
+seqnames	BLM	BLM/RECQL5	RECQL5	WT	ALL
 chr1	14	20	0	0	34
 chr10	2	9	0	0	11
 chr11	11	12	2	0	25

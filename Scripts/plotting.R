@@ -1,8 +1,10 @@
-setwd("/")
+#setwd("/")
 library(plyr)
+library(tidyverse)
+args = commandArgs(trailingOnly=TRUE)
+args=c("Output/Breakpoints/Aug28_breakpoints.txt")
 
-countedSCEs <- read.table("Users/zeidh/Desktop/BreakpointerGithub/Output/Breakpoints/Aug28_breakpoints.txt",header=T)
-
+countedSCEs <- read.table(args[1],header=T)
 countedSCEs$gene <- as.factor(countedSCEs$gene)
 countedSCEs$Library <- as.factor(countedSCEs$Library)
 
@@ -10,40 +12,64 @@ countedSCEs$Library <- as.factor(countedSCEs$Library)
 
 
 #sces per chroomosome
-all <- as.data.frame(countedSCEs %>% group_by(seqnames) %>% dplyr::summarize(all=n()))
-b <- as.data.frame(countedSCEs %>% filter(gene=="BLM")  %>% group_by(seqnames) %>% dplyr::summarize(blm=n()))
-br <- as.data.frame(countedSCEs %>% filter(gene=="BLM/RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize(blmrecql5= n()))
-r <- as.data.frame(countedSCEs %>% filter(gene=="RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize(recql5=n()))
-w <- as.data.frame(countedSCEs %>% filter(gene=="WT")  %>% group_by(seqnames)%>% dplyr::summarize(wt=n()))
+all <- as.data.frame(countedSCEs %>% group_by(seqnames) %>% dplyr::summarize(ALL=n()))
+b <- as.data.frame(countedSCEs %>% filter(gene=="BLM")  %>% group_by(seqnames) %>% dplyr::summarize(BLM=n()))
+br <- as.data.frame(countedSCEs %>% filter(gene=="BLM/RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize("BLM/RECQL5"= n()))
+r <- as.data.frame(countedSCEs %>% filter(gene=="RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize(RECQL5=n()))
+w <- as.data.frame(countedSCEs %>% filter(gene=="WT")  %>% group_by(seqnames)%>% dplyr::summarize(WT=n()))
 byChr <- merge(b,br,by="seqnames")
 byChr <- merge(byChr,r,by="seqnames",all=T)
 byChr <- merge(byChr,w,by="seqnames",all=T)
 byChr <- merge(byChr,all,by="seqnames",all=T)
 byChr[is.na(byChr)] <- 0
-write.table(byChr,"Users/zeidh/Desktop/BreakpointerGithub/Output/Tables/perChrom.txt",quote=F,row.names = F,col.names = F,sep="\t")
+write.table(byChr,"Output/Tables/perChrom.txt",quote=F,row.names = F,col.names = T,sep="\t")
 
 
-
+numOfLibsPerGene <- data.frame(gene=character(),n=numeric())
 b <- (as.data.frame(countedSCEs %>% filter(gene=="BLM")  %>% droplevels()))# group_by(seqnames)%>% summarize(n()))
-length(levels(b$Library))
+numOfLibsPerGene= add_row(numOfLibsPerGene, gene="BLM",n=as.numeric(length(levels(b$Library))))
 br <- (as.data.frame(countedSCEs %>% filter(gene=="BLM/RECQL5")  %>% droplevels()))# group_by(seqnames)%>% summarize(n()))
-length(levels(br$Library))
+numOfLibsPerGene= add_row(numOfLibsPerGene, gene="BLM.RECQL5",n=as.numeric(length(levels(br$Library))))
 r <- (as.data.frame(countedSCEs %>% filter(gene=="RECQL5")  %>% droplevels()))# group_by(seqnames)%>% summarize(n()))
-length(levels(r$Library))
+numOfLibsPerGene= add_row(numOfLibsPerGene, gene="RECQL5",n=as.numeric(length(levels(r$Library))))
 w <- (as.data.frame(countedSCEs %>% filter(gene=="WT")  %>% droplevels()))# group_by(seqnames)%>% summarize(n()))
-length(levels(w$Library))
+numOfLibsPerGene= add_row(numOfLibsPerGene, gene="WT",n=as.numeric(length(levels(w$Library))))
+numOfLibsPerGene= add_row(numOfLibsPerGene, gene="ALL",n=as.numeric(length(levels(countedSCEs$Library))))
+write.table(numOfLibsPerGene,"Output/Tables/numOfLibsPerGene.txt",quote=F,row.names = F,col.names = F,sep="\t")
 
 
-lengths <- read.table("Users/zeidh/Desktop/chrLen2.txt",header=T,fill=T)
-tidy <- gather(lengths, gene,sce_per_chr,BLM:BLM.RECQL5)
+numOfLibsPerGene=read.table("Output/Tables/numOfLibsPerGene.txt",header=F)
+lengths <- read.table("Output/Tables/chrLengths.txt",header=T)
+byChr<- read.table("Output/Tables/perChrom.txt",header=T)
 
-ggplot(tidy) + geom_point(aes(Chromosome.1,sce_per_chr,group=gene,color=gene))+
-	geom_smooth(aes(Chromosome.1,sce_per_chr,group=gene,color=gene),se=F,method="lm")+
+for (i in c("BLM","BLM.RECQL5","RECQL5","WT","ALL")){
+	#print(byChr[,i])
+	for (j in 1:nrow(numOfLibsPerGene)){
+		if (numOfLibsPerGene[j,1]==i){
+			#print(numOfLibsPerGene[j,2])
+			byChr[,i] = byChr[,i]/ numOfLibsPerGene[j,2]
+		}
+	}
+}
+
+scePerChrPerGeneVsLength <- merge(lengths,byChr,by.x="Chromosome",by.y="seqnames")
+tidy <- gather(scePerChrPerGeneVsLength, gene,sce_per_chr,BLM:ALL)
+all <- filter(tidy,gene=="ALL")
+tidy <- filter(tidy,gene!="ALL")
+
+ggplot(tidy) + geom_point(aes(Length,sce_per_chr,group=gene,color=gene))+
+	geom_smooth(aes(Length,sce_per_chr,group=gene,color=gene),se=F,method="lm")+
 	theme_classic(base_size = 18) +
 	ylab("SCEs/chr/lib")+
-	xlab("Chromosome Length")
+	xlab("Chromosome Length") +
+	ggsave("Output/Plots/scePerChrPerGeneVsLength.png")
 
-
+ggplot(tidy) + geom_point(aes(Length,sce_per_chr,group=gene,color=gene))+
+	geom_smooth(all,mapping=aes(Length,sce_per_chr),color="black",method="lm",size=2)+
+	theme_classic(base_size = 18) +
+	ylab("SCEs/chr/lib")+
+	xlab("Chromosome Length") +
+	ggsave("Output/Plots/scePerChrPerGeneVsLength_ALL.png")
 
 
 
@@ -51,11 +77,9 @@ ggplot(tidy) + geom_point(aes(Chromosome.1,sce_per_chr,group=gene,color=gene))+
 test<-as.data.frame(countedSCEs %>%
 	group_by(Library) %>%
 	dplyr::summarize(n()))
-
 test$gene <- "gene"
 test$library <- test$Library
 test <- test %>% separate(Library, c("a","b","c","d","e","f"), "[_-]+")
-
 
 for (row in 1:nrow(test)){
 	for (letter in c("a","b","c","d","e","f")){
@@ -81,50 +105,48 @@ for (row in 1:nrow(test)){
 }
 
 test <- select(test,c("n()","gene"))
-test<-rename(test,c("n()"="sces"))
-
+test<-dplyr::rename(test,c("sces"="n()"))
 
 ggplot(test) + geom_jitter(aes(gene,sces, color=gene))+ geom_boxplot(aes(gene,sces),width=0.1,coef = 5) +
 	theme_classic()+
-	theme(text=element_text(size=15)) 
+	theme(text=element_text(size=15)) +
+	ggsave("Output/Plots/SCEperGene.png")
 
-ggplot(countedSCEs) + geom_smooth(aes(ReadsPerMb, width,color=gene),se=F) +
+#my_comparisons <- list( c("WT", "RECQL5"), c("WT", "BLM/RECQL5"), c("WT", "BLM") )
+#ggboxplot(test, x = "gene", y = "sces",
+#		  color = "black",  add = "jitter",width=0.25, add.params = list(color = "gene"),
+#		  xlab="Gene",ylab="SCEs/library") +
+#	stat_compare_means(comparisons = my_comparisons,label.y = c(31, 34, 37)) +
+#	stat_compare_means(label = "p.signif", method = "t.test",
+#					   ref.group = "WT") 
+
+
+
+
+
+
+ggplot(countedSCEs) + geom_smooth(aes(Reads_per_Mb, width,color=gene),se=F) +
 	scale_y_log10() +
 	theme_classic() +
 	theme(text=element_text(size=15))+
-	geom_hline(yintercept=10000, linetype="dashed", color = "red") 
-countedSCEs$width[500]
-
-my_comparisons <- list( c("WT", "RECQL5"), c("WT", "BLM/RECQL5"), c("WT", "BLM") )
-ggboxplot(test, x = "gene", y = "sces",
-		  color = "black",  add = "jitter",width=0.25, add.params = list(color = "gene"),
-		  xlab="Gene",ylab="SCEs/library") +
-	stat_compare_means(comparisons = my_comparisons,label.y = c(31, 34, 37)) +
-	stat_compare_means(label = "p.signif", method = "t.test",
-					   ref.group = "WT") 
+	geom_hline(yintercept=10000, linetype="dashed", color = "red") +
+	ggsave("Output/Plots/resolutionVsDepth.png")
 
 
+
+sce_summary=data.frame(gene=character(),SCE=numeric(),mean_resolution=numeric(),median_resolution=numeric())
 b<- filter(countedSCEs, gene=="BLM")
-mean(b$width)
-median(b$width)
-nrow(b)
-b<- filter(countedSCEs, gene=="RECQL5")
-mean(b$width)
-median(b$width)
-nrow(b)
-b<- filter(countedSCEs, gene=="BLM/RECQL5")
-mean(b$width)
-median(b$width)
-nrow(b)
-b<- filter(countedSCEs, gene=="WT")
-mean(countedSCEs$width)
-median(countedSCEs$width)
-nrow(b)
+sce_summary<- add_row(sce_summary,gene="BLM",SCE=nrow(b),mean_resolution=mean(b$width),median_resolution=median(b$width))
+r<- filter(countedSCEs, gene=="RECQL5")
+sce_summary<- add_row(sce_summary,gene="RECQL5",SCE=nrow(r),mean_resolution=mean(r$width),median_resolution=median(r$width))
+br<- filter(countedSCEs, gene=="BLM/RECQL5")
+sce_summary<- add_row(sce_summary,gene="BLM/RECQL5",SCE=nrow(br),mean_resolution=mean(br$width),median_resolution=median(br$width))
+w<- filter(countedSCEs, gene=="WT")
+sce_summary<- add_row(sce_summary,gene="WT",SCE=nrow(w),mean_resolution=mean(w$width),median_resolution=median(w$width))
+write.table(sce_summary,"Output/Tables/SCE_summary.txt",quote=F,row.names = F,col.names = T,sep="\t")
 
 
-library(tidyverse)
-library(plyr)
-nonWidthSizeCutOff = countedSCEs
+
 
 #plot here
 ggplot(countedSCEs) + stat_ecdf(aes(width,color=gene)) +
@@ -134,72 +156,9 @@ ggplot(countedSCEs) + stat_ecdf(aes(width,color=gene)) +
 	xlab("Resolution") +
 	annotation_logticks(sides = "b") +
 	theme(text = element_text(size=15))+
-	geom_density(aes(width),adjust=adj,size=1.1)+
+	geom_density(aes(width),size=1.1)+
 	geom_vline(xintercept=median(countedSCEs$width), linetype="dashed", color = "red") +
-	geom_text(aes(x=5000, label=paste0("Median\n","36.3Kb"), y=0.8))
-mean<-mean(countedSCEs$width)
-sort(countedSCEs$width)
-ggsave("Plots/truePosCumlative.png")
-ggplot(q) + stat_ecdf(aes(width,color=gene)) +
-	scale_x_log10() +
-	theme_classic() +
-	ylab("SCEs Mapped (%)") +
-	xlab("Resolution") +
-	annotation_logticks(sides = "b") +
-	theme(text = element_text(size=20))+
-	geom_density(aes(width,color=gene),adjust=adj, alpha=0.7)
-
-smooth_ecd = function(adj = 1) {
-	
-	# Fake data
-	dat = data.frame(x=countedSCEs$width)
-	
-	# Extend range of density estimate beyond data
-	e =  0.3 * diff(range(dat$x))
-	
-	# Kernel density estimate of fake data
-	#adj=1
-	dens = density(dat$x, adjust=adj, from=min(dat$x)-e, to=max(dat$x) +e)
-	dens = data.frame(x=dens$x, y=dens$y)
-	
-	# Plot kernel density (blue), ecdf (red) and smoothed ecdf (black)
-	ggplot(dat, aes(x)) + 
-		geom_density(adjust=adj, colour="blue", alpha=0.7) +
-		geom_line(data=dens, aes(x=x, y=cumsum(y)/sum(y)), size=0.7, colour='grey30') +
-		stat_ecdf(colour="red", size=0.6, alpha=0.6) +
-		theme_classic() +
-		labs(title=paste0("adj=",adj))+
-		scale_x_log10()
-}
-smooth_ecd(adj=1)
-smooth_ecd(adj=0.3)
-smooth_ecd(adj=0.1)
-
-
-
-
-bl <- c()
-r=countedSCEs
-n=0
-for (row in 1:nrow(countedSCEs)){
-	if(as.numeric(as.character(countedSCEs[row,3])) - as.numeric(as.character(countedSCEs[row,2])) <= 10000){
-		print("small")
-	}
-	else if (as.numeric(as.character(countedSCEs[row,3])) - as.numeric(as.character(countedSCEs[row,2])) >= 10000){
-		print("big")
-		bl <- append(bl,row)
-		n=n+1
-	}
-}
-nrow(countedSCEs)
-n
-mean(countedSCEs$width)
-mean(q$width)
-if (length(bl)!=0){
-	q <- r[-c(bl),]
-	
-}
-
-countedSCEs=q
+	geom_text(aes(x=5000, label=paste0("Median\n",median(countedSCEs$width)," bp"), y=0.8))  +
+	ggsave("Output/Plots/breakpointResolution.png")
 
 
