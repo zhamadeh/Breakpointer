@@ -2,10 +2,7 @@ setwd("/")
 args = commandArgs(trailingOnly=TRUE)
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(miceadds)))
-#args= c("/Users/zeidh/Desktop/Data/METRICS/Aug18.txt","/Users/zeidh/Desktop/Data/RDATA/Aug18-2020/unfiltered_fromServer/", "/Users/zeidh/Desktop/Data/RDATA/Aug18-2020/good/")
-#args= c("/Users/zeidh/Desktop/Data/METRICS/Aug18.txt","/Users/zeidh/Desktop/backup/", "/Users/zeidh/Desktop/Data/RDATA/Aug18-2020/good/")
-#args=c("/Users/zeidh/Desktop/Data/METRICS/Aug28.txt" ,"/Users/zeidh/Desktop/Data/RDATA/Aug28-2020/unfiltered_fromServer/" ,"/Users/zeidh/Desktop/Data/RDATA/Aug28-2020/good/")
-
+#args= c("/Users/zeidh/Desktop/BreakpointerGithub/Input/Metrics/Aug28.txt",  "/Users/zeidh/Desktop/BreakpointerGithub/Input/RData_unfiltered/","/Users/zeidh/Desktop/BreakpointerGithub/Input/RData_good/")
 cat("\n")
 cat("Filtering out poor quality libraries ....")
 
@@ -20,7 +17,7 @@ for (row in 1:nrow(good)){
 	save(file=fileDir, file)
 }
 
-write.table(good$Library,"/Users/zeidh/Desktop/BreakpointerGithub/Good_Libraries/August28-2020.txt",sep="\t",quote=F,row.names = F,col.names = F)
+write.table(good$Library,"/Users/zeidh/Desktop/BreakpointerGithub/Output/Good_libraries/August28-2020.txt",sep="\t",quote=F,row.names = F,col.names = F)
 
 #summary quality stats
 q <- libraries

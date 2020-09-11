@@ -6,21 +6,21 @@ args = commandArgs(trailingOnly=TRUE)
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(miceadds)))
 
-#args=c("/Users/zeidh/Desktop/Data/RDATA/ALL_BL/","/Users/zeidh/Desktop/BreakpointerGithub/Breakpoints/","/Users/zeidh/Desktop/Data/METRICS")
-#args=c("/Users/zeidh/Desktop/Data/RDATA/Aug28-2020/blacklistedForPlotting","/Users/zeidh/Desktop/BreakpointerGithub/Breakpoints/","/Users/zeidh/Desktop/Data/METRICS")
 #This is the master function
 master <- function(inputDir,outputDir,metricsDir){
 	bind <- masterCollectWidths(list.files(inputDir,full.names = T))
 	cat("\nCollecting breakpoints from",args[1], "...\n\n")
 	cat("Annotating breakpoinst with metadata from",args[3],"...\n\n")
 	bind <- annotatingBreakpoints(bind,metricsDir)
+	bind <- removingInversions(bind)
 	cat("Saving breakpoints to",args[2],"...\n\n")
-	write.table(bind,paste0(outputDir,"genomicBreakpoints_BL_feb25_mar6_aug18_aug28.txt"),append = F,row.names = F,col.names = T,quote=F,sep="\t")
+	write.table(bind,paste0(outputDir,args[4]),append = F,row.names = F,col.names = T,quote=F,sep="\t")
 	return(bind)
 }
 
 masterCollectWidths <- function(inputDirectory){
 	bind=data.frame()
+	#file=inputDirectory[1]
 	for (file in inputDirectory){
 		data <- load.Rdata2(file)
 		breakpoints <- as.data.frame(data$breaks)
@@ -75,33 +75,74 @@ annotatingBreakpoints <- function(bind,metricsDir){
 
 collectMetrics <- function(metricsDir){
 	files <- list.files(metricsDir, full.names=T)
-	
-	feb25 <- read.table(files[3],header=T,fill=T) %>% select(Library, Reads_aligned_postfiltering,Background,Reads_per_Mb) 
-	#feb25 <- rename(feb25, c("Reads" = "Reads_aligned_postfiltering"  , "Background" =  "Background" , "ReadsPerMb" = "Reads_per_Mb" ))
-	names(feb25)[names(feb25) == "Reads_aligned_postfiltering"] <- "Reads"
-	names(feb25)[names(feb25) == "Reads_per_Mb"] <- "ReadsPerMb"
-	
-	mar6<- read.table(files[4],header=T,fill=T)%>% select(Library, Postfiltering_reads_aligned,Background,Reads_per_Mb)
-	#mar6<- rename(mar6, c("Reads"="Postfiltering_reads_aligned" , "Background" =  "Background" , "ReadsPerMb" = "Reads_per_Mb" ))
-	names( mar6)[names( mar6) == "Postfiltering_reads_aligned"] <- "Reads"
-	names( mar6)[names( mar6) == "Reads_per_Mb"] <- "ReadsPerMb"
-	
-	aug2020<- read.table(files[1],header=T,fill=T)%>% select(Library, Postfiltering_reads_aligned,Background,Reads_per_Mb)
-	#aug2020<- rename(aug2020, c("Reads"="Postfiltering_reads_aligned" , "Background" =  "Background" , "ReadsPerMb" = "Reads_per_Mb" ))
-	names(aug2020)[names(aug2020) == "Postfiltering_reads_aligned"] <- "Reads"
-	names(aug2020)[names(aug2020) == "Reads_per_Mb"] <- "ReadsPerMb"
-	
-	aug28<- read.table(files[2],header=T,fill=T)%>% select(Library, Postfiltering_reads_aligned,Background,Reads_per_Mb)
-	#au28<- rename(au28, c("Reads"="Postfiltering_reads_aligned" , "Background" =  "Background" , "ReadsPerMb" = "Reads_per_Mb" ))
-	names(aug28)[names(aug28) == "Postfiltering_reads_aligned"] <- "Reads"
-	names(aug28)[names(aug28) == "Reads_per_Mb"] <- "ReadsPerMb"
-	
-	nrow(feb25) + nrow(mar6) + nrow(aug2020) + nrow(aug28)
-	
-	metrics <- rbind(aug28,feb25,mar6,aug2020)
-	str(metrics$Library)
-	
+	metrics <- data.frame()
+	if (length(files)!=0){
+		#file=files[2]
+		for (file in files){
+			met <- read.table(file,header=T,fill=T) 
+			if ("Reads_aligned_postfiltering" %in% colnames(met)){
+				met <- met %>% select(Library, Reads_aligned_postfiltering,Background,Reads_per_Mb)
+				names(met)[names(met) == "Reads_aligned_postfiltering"] <- "Reads"
+			}
+			else if ("Postfiltering_reads_aligned" %in% colnames(met)){
+				met <- met %>% select(Library, Postfiltering_reads_aligned , Background,Reads_per_Mb)
+				names(met)[names(met) == "Postfiltering_reads_aligned"] <- "Reads"
+			}
+			metrics <- rbind(met,metrics)
+			 
+		}
+	}
 	return(metrics)
+}
+
+removingInversions <- function(bind){
+	countedSCEs <- bind#[-c(3,22:24,27,33,35,118,123:126,178,182,191,224,226,251,279,287,293,302:308,320,321,334,342,348,362,395,399,400,402,405,412,443,448),]
+	rows <- c()
+	#removing chr15 and chr16 inversions at 60-90Mb and 21-23Mb
+	#removes 258 inversion calls (129) from 1062 leaving behind 804 SCEs
+	for (row in 1:nrow(countedSCEs)){
+		if (countedSCEs[row,1]=="chr15"){
+			if (countedSCEs[row,2] <= 60000000 & countedSCEs[row,3] >= 90000000 ){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] >= 60000000 & countedSCEs[row,2] <= 90000000 & countedSCEs[row,3] <= 90000000 & countedSCEs[row,3] >= 60000000){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] >= 60000000 & countedSCEs[row,2] <= 90000000 & countedSCEs[row,3] >= 90000000){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] <= 60000000 & countedSCEs[row,3] <= 90000000 & countedSCEs[row,3] >= 60000000){
+				rows <- append(row,rows)
+			}
+		}
+		else if (countedSCEs[row,1]=="chr16"){
+			if (countedSCEs[row,2] <= 21000000 & countedSCEs[row,3] >= 23000000 ){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] >= 21000000 & countedSCEs[row,2] <= 23000000 & countedSCEs[row,3] <= 23000000 & countedSCEs[row,3] >= 21000000){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] >= 21000000 & countedSCEs[row,2] <= 23000000 & countedSCEs[row,3] >= 23000000){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] <= 21000000 & countedSCEs[row,3] <= 23000000 & countedSCEs[row,3] >= 21000000){
+				rows <- append(row,rows)
+			}
+		}
+		else if (countedSCEs[row,1]=="chr8"){
+			if (countedSCEs[row,2] >= 70569000 & countedSCEs[row,2] <= 70800000 & countedSCEs[row,3] <= 70800000 & countedSCEs[row,3] >= 70569000){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] >= 70569000 & countedSCEs[row,2] <= 70800000 & countedSCEs[row,3] >= 70800000){
+				rows <- append(row,rows)
+			}
+			else if (countedSCEs[row,2] <= 70569000 & countedSCEs[row,3] <= 70800000 & countedSCEs[row,3] >= 70569000){
+				rows <- append(row,rows)
+			}
+		}
+	}
+	countedSCEs <- (countedSCEs[-c(rows),])
+	return(countedSCEs)
 }
 
 bind <- master(args[1],args[2],args[3])
@@ -112,10 +153,12 @@ bind <- master(args[1],args[2],args[3])
 #args2=c("/Users/zeidh/Desktop/Data/RDATA/ALL_BL/","/Users/zeidh/Desktop/BreakpointerGithub/Breakpoints/","/Users/zeidh/Desktop/Data/METRICS")
 #inputDir="/Users/zeidh/Desktop/Data/RDATA/ALL_BL/"
 
-#inputDir="/Users/zeidh/Desktop/Data/RDATA/Aug28-2020/blacklistedForPlotting"
+#inputDir=args[1]
 #inputDirectory=list.files(inputDir,full.names = T)
-#outputDir="/Users/zeidh/Desktop/BreakpointerGithub/Breakpoints/"
-#metricsDir="/Users/zeidh/Desktop/Data/METRICS"
+#outputDir=args[2]
+#metricsDir=args[3]
+#args=c("/Users/zeidh/Desktop/BreakpointerGithub/Input/RData_blacklisted/","/Users/zeidh/Desktop/BreakpointerGithub/Output/Breakpoints/","/Users/zeidh/Desktop/BreakpointerGithub/Input/Metrics/")
+
 
 #inputDirectory=list.files(inputDir,full.names = T)
 #(file=inputDirectory[2])
