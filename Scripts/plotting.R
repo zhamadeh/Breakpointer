@@ -1,6 +1,6 @@
 #setwd("/")
-library(plyr)
-library(tidyverse)
+suppressWarnings(suppressMessages(library(plyr)))
+suppressWarnings(suppressMessages(library(tidyverse)))
 args = commandArgs(trailingOnly=TRUE)
 args=c("Output/Breakpoints/Aug28_breakpoints.txt")
 
@@ -12,11 +12,11 @@ countedSCEs$Library <- as.factor(countedSCEs$Library)
 
 
 #sces per chroomosome
-all <- as.data.frame(countedSCEs %>% group_by(seqnames) %>% dplyr::summarize(ALL=n()))
-b <- as.data.frame(countedSCEs %>% filter(gene=="BLM")  %>% group_by(seqnames) %>% dplyr::summarize(BLM=n()))
-br <- as.data.frame(countedSCEs %>% filter(gene=="BLM/RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize("BLM/RECQL5"= n()))
-r <- as.data.frame(countedSCEs %>% filter(gene=="RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize(RECQL5=n()))
-w <- as.data.frame(countedSCEs %>% filter(gene=="WT")  %>% group_by(seqnames)%>% dplyr::summarize(WT=n()))
+suppressMessages(all <- as.data.frame(countedSCEs %>% group_by(seqnames) %>% dplyr::summarize(ALL=n())))
+suppressMessages(b <- as.data.frame(countedSCEs %>% filter(gene=="BLM")  %>% group_by(seqnames) %>% dplyr::summarize(BLM=n())))
+suppressMessages(br <- as.data.frame(countedSCEs %>% filter(gene=="BLM/RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize("BLM/RECQL5"= n())))
+suppressMessages(r <- as.data.frame(countedSCEs %>% filter(gene=="RECQL5")  %>% group_by(seqnames)%>% dplyr::summarize(RECQL5=n())))
+suppressMessages(w <- as.data.frame(countedSCEs %>% filter(gene=="WT")  %>% group_by(seqnames)%>% dplyr::summarize(WT=n())))
 byChr <- merge(b,br,by="seqnames")
 byChr <- merge(byChr,r,by="seqnames",all=T)
 byChr <- merge(byChr,w,by="seqnames",all=T)
@@ -57,29 +57,29 @@ tidy <- gather(scePerChrPerGeneVsLength, gene,sce_per_chr,BLM:ALL)
 all <- filter(tidy,gene=="ALL")
 tidy <- filter(tidy,gene!="ALL")
 
-ggplot(tidy) + geom_point(aes(Length,sce_per_chr,group=gene,color=gene))+
-	geom_smooth(aes(Length,sce_per_chr,group=gene,color=gene),se=F,method="lm")+
+suppressMessages(ggplot(tidy) + geom_point(aes(Length,sce_per_chr,group=gene,color=gene), na.rm=TRUE)+
+	geom_smooth(aes(Length,sce_per_chr,group=gene,color=gene),se=F,method="lm", na.rm=TRUE)+
 	theme_classic(base_size = 18) +
 	ylab("SCEs/chr/lib")+
 	xlab("Chromosome Length") +
-	ggsave("Output/Plots/scePerChrPerGeneVsLength.png")
+	ggsave("Output/Plots/scePerChrPerGeneVsLength.png"))
 
-ggplot(tidy) + geom_point(aes(Length,sce_per_chr,group=gene,color=gene))+
-	geom_smooth(all,mapping=aes(Length,sce_per_chr),color="black",method="lm",size=2)+
+suppressMessages(ggplot(tidy) + geom_point(aes(Length,sce_per_chr,group=gene,color=gene), na.rm=TRUE)+
+	geom_smooth(all,mapping=aes(Length,sce_per_chr),color="black",method="lm",size=2, na.rm=TRUE)+
 	theme_classic(base_size = 18) +
 	ylab("SCEs/chr/lib")+
 	xlab("Chromosome Length") +
-	ggsave("Output/Plots/scePerChrPerGeneVsLength_ALL.png")
+	ggsave("Output/Plots/scePerChrPerGeneVsLength_ALL.png"))
 
 
 
 
-test<-as.data.frame(countedSCEs %>%
+suppressMessages(test<-as.data.frame(countedSCEs %>%
 	group_by(Library) %>%
-	dplyr::summarize(n()))
+	dplyr::summarize(n())))
 test$gene <- "gene"
 test$library <- test$Library
-test <- test %>% separate(Library, c("a","b","c","d","e","f"), "[_-]+")
+suppressWarnings(test <- test %>% separate(Library, c("a","b","c","d","e","f"), "[_-]+"))
 
 for (row in 1:nrow(test)){
 	for (letter in c("a","b","c","d","e","f")){
@@ -112,6 +112,7 @@ ggplot(test) + geom_jitter(aes(gene,sces, color=gene))+ geom_boxplot(aes(gene,sc
 	theme(text=element_text(size=15)) +
 	ggsave("Output/Plots/SCEperGene.png")
 
+
 #my_comparisons <- list( c("WT", "RECQL5"), c("WT", "BLM/RECQL5"), c("WT", "BLM") )
 #ggboxplot(test, x = "gene", y = "sces",
 #		  color = "black",  add = "jitter",width=0.25, add.params = list(color = "gene"),
@@ -124,14 +125,12 @@ ggplot(test) + geom_jitter(aes(gene,sces, color=gene))+ geom_boxplot(aes(gene,sc
 
 
 
-
-ggplot(countedSCEs) + geom_smooth(aes(Reads_per_Mb, width,color=gene),se=F) +
+suppressMessages(suppressWarnings(ggplot(countedSCEs) + geom_smooth(aes(Reads_per_Mb, width,color=gene),se=F) +
 	scale_y_log10() +
 	theme_classic() +
 	theme(text=element_text(size=15))+
 	geom_hline(yintercept=10000, linetype="dashed", color = "red") +
-	ggsave("Output/Plots/resolutionVsDepth.png")
-
+	ggsave("Output/Plots/resolutionVsDepth.png")))
 
 
 sce_summary=data.frame(gene=character(),SCE=numeric(),mean_resolution=numeric(),median_resolution=numeric())
@@ -149,7 +148,7 @@ write.table(sce_summary,"Output/Tables/SCE_summary.txt",quote=F,row.names = F,co
 
 
 #plot here
-ggplot(countedSCEs) + stat_ecdf(aes(width,color=gene)) +
+suppressMessages(suppressWarnings(ggplot(countedSCEs) + stat_ecdf(aes(width,color=gene)) +
 	scale_x_log10() +
 	theme_classic() +
 	ylab("SCEs Mapped (%)") +
@@ -158,7 +157,7 @@ ggplot(countedSCEs) + stat_ecdf(aes(width,color=gene)) +
 	theme(text = element_text(size=15))+
 	geom_density(aes(width),size=1.1)+
 	geom_vline(xintercept=median(countedSCEs$width), linetype="dashed", color = "red") +
-	geom_text(aes(x=5000, label=paste0("Median\n",median(countedSCEs$width)," bp"), y=0.8))  +
-	ggsave("Output/Plots/breakpointResolution.png")
+	geom_text(aes(x=5000, label=paste0("Median\n",median(width)," bp"), y=0.8))  +
+	ggsave("Output/Plots/breakpointResolution.png")))
 
 

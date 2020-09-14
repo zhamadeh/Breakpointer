@@ -16,7 +16,7 @@ master <- function(inputDirectory, outputDirectory,plottingDirectory){
 		blacklistBreakpoint(as.character(file),outputDirectory)
 		
 	}
-	cat("Done filtering out breakpoints ... plotting out chromsome ideograms \n")
+	cat("\n Done filtering out breakpoints ... plotting out chromsome ideograms \n\n")
 	#filteredOutputDir <- list.files(outputDirectory)
 	plotBreakpoints(outputDirectory,plottingDirectory)
 }
