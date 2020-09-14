@@ -1,15 +1,16 @@
 #This script is for collecting Breakpoints from multiple libraries
 #Also for creating seperate files for different cell lines (ie. blm, recq5 ..)
-#setwd("/Users/zeidh/Desktop/BreakpointerGithub/")
+
 args = commandArgs(trailingOnly=TRUE)
 
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(miceadds)))
 
+
 #This is the master function
 master <- function(inputDir,outputDir,metricsDir){
-	bind <- masterCollectWidths(list.files(inputDir,full.names = T))
 	cat("\nCollecting breakpoints from",args[1], "...\n\n")
+	bind <- masterCollectWidths(list.files(inputDir,full.names = T))
 	cat("Annotating breakpoinst with metadata from",args[3],"...\n\n")
 	bind <- annotatingBreakpoints(bind,metricsDir)
 	bind <- removingInversions(bind)
@@ -20,11 +21,9 @@ master <- function(inputDir,outputDir,metricsDir){
 
 masterCollectWidths <- function(inputDirectory){
 	bind=data.frame()
-	#file=inputDirectory[1]
 	for (file in inputDirectory){
 		data <- load.Rdata2(file)
-		breakpoints <- as.data.frame(data$breaks)
-		#cat(paste0(ncol(breakpoints),data$ID))
+		suppressMessages(breakpoints <- as.data.frame(data$breaks))
 		if (nrow(breakpoints)!= 0 ){
 			breakpoints$library = data$ID
 			bind <- rbind(breakpoints,bind)
@@ -157,8 +156,7 @@ bind <- master(args[1],args[2],args[3])
 #inputDirectory=list.files(inputDir,full.names = T)
 #outputDir=args[2]
 #metricsDir=args[3]
-#args=c("/Users/zeidh/Desktop/BreakpointerGithub/Input/RData_blacklisted/","/Users/zeidh/Desktop/BreakpointerGithub/Output/Breakpoints/","/Users/zeidh/Desktop/BreakpointerGithub/Input/Metrics/")
-
+#args=c("Input/RData_blacklisted/","Output/Breakpoints/","Input/Metrics/","Aug28_breakpoints.txt")
 
 #inputDirectory=list.files(inputDir,full.names = T)
 #(file=inputDirectory[2])
