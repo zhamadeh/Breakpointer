@@ -9,4 +9,4 @@ Rscript Scripts/collectBreakpoints.R Input/RData_blacklisted/ Output/Breakpoints
 
 Rscript Scripts/plotting.R Output/Breakpoints/Aug28_breakpoints.txt
 
-#Rscript Scripts/savingBreakpointsToEnrichmentDir.R Output/Breakpoints/Aug28_breakpoints.txt
+Rscript Scripts/savingBreakpointsToEnrichmentDir.R Output/Breakpoints/Aug28_breakpoints.txt
