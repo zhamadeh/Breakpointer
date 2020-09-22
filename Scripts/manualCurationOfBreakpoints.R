@@ -1,6 +1,6 @@
 setwd("/")
 args = commandArgs(trailingOnly=TRUE)
-args= c("/Users/zeidh/Desktop/BreakpointerGithub/Output/Breakpoints/","Aug28_breakpoints.txt")
+#args= c("/Users/zeidh/Desktop/BreakpointerGithub/Output/Breakpoints/","Aug28_breakpoints.txt")
 bind <- read.table(paste0(args[1],args[2]),header=T)
 
 #ALL

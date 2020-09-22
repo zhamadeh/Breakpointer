@@ -1,5 +1,5 @@
 args = commandArgs(trailingOnly=TRUE)
-args=c("Output/Breakpoints/Aug28_breakpoints.txt")
+#args=c("Output/Breakpoints/Aug28_breakpoints.txt")
 
 countedSCEs <- read.table(args[1],header=T)
 

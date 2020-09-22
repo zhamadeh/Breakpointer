@@ -2,7 +2,7 @@
 suppressWarnings(suppressMessages(library(plyr)))
 suppressWarnings(suppressMessages(library(tidyverse)))
 args = commandArgs(trailingOnly=TRUE)
-args=c("Output/Breakpoints/Aug28_breakpoints.txt")
+#args=c("Output/Breakpoints/Aug28_breakpoints.txt")
 
 countedSCEs <- read.table(args[1],header=T)
 countedSCEs$gene <- as.factor(countedSCEs$gene)
