@@ -49,7 +49,7 @@ for (row in 1:nrow(good)){
 	}
 }
 
-write.table(intersect(paste0(good[,1],".RData"),list.files(args[2])),"/Users/zeidh/Desktop/BreakpointerGithub/Output/Good_libraries/August28-2020.txt",sep="\t",quote=F,row.names = F,col.names = F)
+write.table(intersect(paste0(good[,1],".RData"),list.files(args[2])),"Output/Good_libraries/August28-2020.txt",sep="\t",quote=F,row.names = F,col.names = F)
 
 #summary quality stats
 q <- libraries

@@ -43,7 +43,7 @@ blacklistBreakpoint <- function(file,outputDirectory){
 	
 	breakpoints <- data$breaks
 	
-	data <- removeCentromereSCEs(data, "/Users/zeidh/Desktop/Coding/for_ERIBA/blacklist/centromeres2.txt")
+	data <- removeCentromereSCEs(data, "Input/Centromeres/centromeres2.txt")
 	#write.table(as.character(length(data$breaks)),"/Users/zeidh/Downloads/test2.txt",quote = F,row.names = F,col.names = F,append = T)
 	class.breakpoint <- "BreakPoint"
 	class(data) <- class.breakpoint
